@@ -1,6 +1,6 @@
 
 const puppeteer = require('puppeteer');
-let arg = "bt"
+let arg = ".300"
 url = 'https://escapefromtarkov.fandom.com/wiki/Ballistics'
 
 
@@ -41,7 +41,7 @@ let finalData = []
 puppeteer.launch().then(async browser => {
     const page = await browser.newPage();
     await page.goto(url);
-    const elements = await page.evaluate(() => Array.from(document.querySelectorAll('tbody > tr'), e => e.innerText));
+    const elements = await page.evaluate(() => Array.from(document.querySelectorAll('#trkballtable > tbody > tr'), e => e.innerText));
 
 
     elements.forEach(element => {
@@ -99,7 +99,7 @@ puppeteer.launch().then(async browser => {
 
     Dataset.forEach(element => {
 
-        console.log(element.name.toLowerCase())
+       
 
         if (element.name.toLowerCase().includes(arg)) {
             finalData.push(element)
@@ -112,7 +112,10 @@ puppeteer.launch().then(async browser => {
         return console.log(finalData)
     }
     else {
-        return console.log(Dataset)
+        Dataset.forEach(element =>{
+            console.log(element.name)
+        })
+        
     }
 
 });
