@@ -126,3 +126,23 @@ async function Sort(arg) {
 
 
 Sort("PRS gs S")
+
+
+async function GetScreenshot(name) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/55/CustomsLargeExpansionGloryMonki.png/revision/latest?cb=20210224211032')
+    await page.setViewport({
+        width: 4096,
+        height: 2160,
+        deviceScaleFactor: 1,
+      });
+    const data = await page.screenshot({ path: 'screenshot.png'})
+    browser.close();
+    return data
+}
+
+
+
+
+GetScreenshot("Customs")
