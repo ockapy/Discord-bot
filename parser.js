@@ -1,47 +1,42 @@
-
 const puppeteer = require('puppeteer');
-let arg = ".300"
-url = 'https://escapefromtarkov.fandom.com/wiki/Ballistics'
 
-
-
-let count = 0
-
-
-let Data = {
-    caliber: '',
-    name: '',
-    damage: '',
-    PP: '',
-    AD: '',
-    Accuracy: '',
-    Recoil: '',
-    FChance: '',
-    L: '',
-    H: '',
-    P1: '',
-    P2: '',
-    P3: '',
-    P4: '',
-    P5: '',
-    P6: '',
+async function GetData() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('https://escapefromtarkov.fandom.com/wiki/Ballistics')
+    const data = await page.evaluate(() => Array.from(document.querySelectorAll('#trkballtable > tbody > tr'), e => e.innerText));
+    browser.close();
+    return data
 }
 
+async function Display(arg) {
+    let elements = await GetData()
+    let count = 0
+    let Dataset = []
+    
 
-let match = []
-match.push(0)
-match.push(Data)
+    let Data = {
+        caliber: '',
+        name: '',
+        damage: '',
+        PP: '',
+        AD: '',
+        Accuracy: '',
+        Recoil: '',
+        FChance: '',
+        L: '',
+        H: '',
+        P1: '',
+        P2: '',
+        P3: '',
+        P4: '',
+        P5: '',
+        P6: '',
+    }
 
-let Dataset = []
-let finalData = []
-
-
-
-
-puppeteer.launch().then(async browser => {
-    const page = await browser.newPage();
-    await page.goto(url);
-    const elements = await page.evaluate(() => Array.from(document.querySelectorAll('#trkballtable > tbody > tr'), e => e.innerText));
+    let match = []
+    match.push(0)
+    match.push(Data)
 
 
     elements.forEach(element => {
@@ -53,8 +48,8 @@ puppeteer.launch().then(async browser => {
         let name = metadata[0].toString().replace('\"', '')
         name = name.split(' ').join('')
 
-        count = 0
 
+        count = 0
 
         for (let i in arg) {
 
@@ -90,36 +85,44 @@ puppeteer.launch().then(async browser => {
             }
             Dataset.push(Data)
             match[1] = metadata
-        }
-    });
-
-    browser.close();
-
-    let searchOK = false
-
-    Dataset.forEach(element => {
-
-       
-
-        if (element.name.toLowerCase().includes(arg)) {
-            finalData.push(element)
-            searchOK = true
 
         }
     });
 
-    if (searchOK == true) {
-        return console.log(finalData)
+    
+
+    return Dataset
+
+}
+
+async function Sort(arg) {
+    arg = arg.replaceAll(" ", '').toLowerCase()
+    
+    let Dataset = await Display(arg)
+    let SortedData = []
+    
+    Dataset.forEach(value => {
+        if(value.name.toLowerCase().includes(arg)){
+            SortedData.push(value)  
+        }
+    });
+
+    if(SortedData.length <= 0){
+        console.log("erreur munition inconnue")
     }
-    else {
-        Dataset.forEach(element =>{
-            console.log(element.name)
+
+    if(SortedData.length != 1){
+        console.log("Plusieurs munitions peuvent correspondre a votre recherche :")
+        SortedData.forEach(ammunition =>{
+            console.log(ammunition.name)
         })
-        
+    }
+    else{
+        console.log("Voici la munition qui correspond a votre recherche :")
+        console.log(SortedData[0])
     }
 
-});
+}
 
 
-
-
+Sort("PRS gs S")
