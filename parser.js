@@ -1,19 +1,44 @@
-const puppeteer = require('puppeteer');
+
 
 async function GetData() {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto('https://escapefromtarkov.fandom.com/wiki/Ballistics')
-    const data = await page.evaluate(() => Array.from(document.querySelectorAll('#trkballtable > tbody > tr'), e => e.innerText));
-    browser.close();
-    return data
+    const puppeteer = require('puppeteer');
+    //console.log(arg)
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto('https://escapefromtarkov.fandom.com/wiki/Special:Search?query=&scope=internal&navigationSearch=true')
+        await page.waitForSelector('input[name=query]');
+        console.log("page 1 Loaded")
+        await page.$eval('input[name=query]', el => el.value = 'slick');
+        await page.$eval('button[type="submit"]', e => e.click());
+        await page.waitForSelector('article');
+        console.log("Page 2 Loaded")
+        await page.evaluate(() => document.querySelector('article > h1 > a').click());
+        await page.waitForSelector('table#va-infobox0');
+        console.log("Page 3 Loaded")
+        const data = await page.evaluate(() => Array.from(document.querySelectorAll('table#va-infobox0 tbody tr td.va-infobox-content, table#va-infobox0 tbody tr td.va-infobox-label'), e => e.innerText));
+        await browser.close();
+        console.log("Récupération des données réussie");
+        return data
+    }
+    catch (error) {
+        console.error(error)
+    }
+
+
+
 }
+
 
 async function Display(arg) {
     let elements = await GetData()
     let count = 0
     let Dataset = []
-    
+
+
+    for (let i = 0; i <= elements.length; i++) {
+
+    }
 
     let Data = {
         caliber: '',
@@ -89,60 +114,76 @@ async function Display(arg) {
         }
     });
 
-    
+
 
     return Dataset
 
 }
 
-async function Sort(arg) {
-    arg = arg.replaceAll(" ", '').toLowerCase()
-    
-    let Dataset = await Display(arg)
-    let SortedData = []
-    
-    Dataset.forEach(value => {
-        if(value.name.toLowerCase().includes(arg)){
-            SortedData.push(value)  
+async function Find() {
+    // arg = arg.replaceAll('&', ' ').toLowerCase()
+    //console.log(arg)
+    let Dataset = [];
+    var labels = [];
+    var values = [];
+    var object = {};
+
+    try {
+        Dataset = await GetData();
+    } catch (error) {
+        console.log("données non transmises");
+    }
+    finally {
+        for (let i = 0; i <= Dataset.length; i++) {
+            if (i % 2 == 0) {
+                if (typeof Dataset[i] == 'undefined') {
+
+                }
+                else {
+                    labels.push(Dataset[i]);
+                }
+
+            }
+            else {
+                values.push(Dataset[i]);
+            }
+
         }
-    });
 
-    if(SortedData.length <= 0){
-        console.log("erreur munition inconnue")
+
+
+        for (let x = 0; x < labels.length; x++) {
+            object[labels[x].toString()] = values[x].toString()
+        }
+       
+        let meta = []
+        meta.push(object)
+        console.log(meta)
     }
 
-    if(SortedData.length != 1){
-        console.log("Plusieurs munitions peuvent correspondre a votre recherche :")
-        SortedData.forEach(ammunition =>{
-            console.log(ammunition.name)
-        })
-    }
-    else{
-        console.log("Voici la munition qui correspond a votre recherche :")
-        console.log(SortedData[0])
-    }
+
+
+
 
 }
 
 
-Sort("PRS gs S")
 
 
-async function GetScreenshot(name) {
+
+async function GetScreenshot() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto('https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/55/CustomsLargeExpansionGloryMonki.png/revision/latest?cb=20210224211032')
     await page.setViewport({
-        width: 4096,
-        height: 2160,
+        width: 1920,
+        height: 1080,
         deviceScaleFactor: 1,
-      });
-    const data = await page.screenshot({ path: 'screenshot.png'})
+    });
+    const data = await page.screenshot({ path: 'screenshot.png' })
     browser.close();
     return data
 }
 
 
-
-
-GetScreenshot("Customs")
+Find('slick')
