@@ -1,15 +1,15 @@
 
 
-async function GetData() {
+async function GetData(arg) {
     const puppeteer = require('puppeteer');
-    //console.log(arg)
+    let input = String(arg);
     try {
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.goto('https://escapefromtarkov.fandom.com/wiki/Special:Search?query=&scope=internal&navigationSearch=true')
         await page.waitForSelector('input[name=query]');
         console.log("page 1 Loaded")
-        await page.$eval('input[name=query]', el => el.value = 'slick');
+        await page.$eval('input[name=query]', (el, input) => el.value = input, input);
         await page.$eval('button[type="submit"]', e => e.click());
         await page.waitForSelector('article');
         console.log("Page 2 Loaded")
@@ -120,16 +120,16 @@ async function Display(arg) {
 
 }
 
-async function Find() {
-    // arg = arg.replaceAll('&', ' ').toLowerCase()
-    //console.log(arg)
+async function Find(search) {
+    let arg = String(search.replaceAll('&', ' ').toLowerCase())
+    console.log(arg)
     let Dataset = [];
     var labels = [];
     var values = [];
     var object = {};
 
     try {
-        Dataset = await GetData();
+        Dataset = await GetData(arg);
     } catch (error) {
         console.log("données non transmises");
     }
@@ -186,4 +186,4 @@ async function GetScreenshot() {
 }
 
 
-Find('slick')
+Find('')
