@@ -13,6 +13,8 @@
         "file-uri-to-path": "^2.0.0",
         "joi": "^17.4.2",
         "nan": "^2.15.0",
+        "puppeteer": "^19.2.2",
+        "request": "^2.88.2",
         "sax": "^1.2.4",
         "winston": "^3.3.3",
         "winston-discordjs": "^2.1.1",

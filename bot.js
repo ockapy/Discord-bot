@@ -1,5 +1,7 @@
 const Discord = require('discord.js')
 const puppeteer = require('puppeteer');
+const request = require('request');
+const fs = require('fs')
 const client = new Discord.Client()
 const { MessageEmbed } = require('discord.js');
 const { func } = require('joi');
@@ -149,7 +151,7 @@ client.on('message', message => {
 
     switch (command) {
         case 'find':
-            let arg = args.join('')
+            let arg = args.join(' ')
             console.log(arg)
             Sort(arg);
             break;
@@ -180,167 +182,149 @@ client.on('message', message => {
 
     }
 
+    async function Sort(arg) {
+        const embed = new MessageEmbed()
+        
+
+
+        let data = await GetData(arg, embed)
+
+        let counter = 0;
+        let title = [];
+        let values = [];
+
+       
+
+       
+
+        data.forEach(element => {
+
+            console.log(String(element))
+            if (counter % 2 == 0) {
+                title.push(element)
+                counter++
+            }
+            else {
+                values.push(element)
+                counter++
+            }
+        })
+        console.log(title)
+        console.log(values)
+
+        var line;
+        
+        for (let i = 0; i < title.length; i++) {
+            if (i%3 == 0) {
+                line = false
+            }
+            else{
+                line = true
+            }
+            embed.addField(name = title[i], value = values[i], inline = line )
+        }
+
+
+        message.channel.send(embed)
 
 
 
+    }
 
 
+    async function GetData(arg, embed) {
 
-
-
-    async function GetData() {
-        const browser = await puppeteer.launch();
+        let input = String(arg);
+        const customargs = [
+            `--start-maximized`
+        ]
+        const browser = await puppeteer.launch({ headless: true, args: customargs, });
         const page = await browser.newPage();
-        await page.goto('https://escapefromtarkov.fandom.com/wiki/Ballistics')
-        const data = await page.evaluate(() => Array.from(document.querySelectorAll('#trkballtable > tbody > tr'), e => e.innerText));
-        browser.close();
+        try{
+            await page.goto('https://escapefromtarkov.fandom.com/wiki/Special:Search?fulltext=1&query=&scope=internal&contentType=&ns%5B0%5D=0')
+            await page.waitForSelector('input[name=query]');
+            console.log("page 1 Loaded")
+            message.channel.send('Chargement...')
+        }catch(e){
+            message.channel.send('erreur lors du chargement des pages')
+        }
+        
+        try{
+            await page.$eval('input[name=query]', (el, input) => el.value = input, input);
+            await page.$eval('button[type="submit"]', e => e.click());
+            await page.waitForSelector('article');
+            console.log("Page 2 Loaded")
+            message.channel.send('Recherche...')
+        }
+        catch(e){
+            message.channel.send('erreur lors du traitement de la recherche')
+        }
+        
+     try{
+
+        await page.evaluate(() => document.querySelector('article > h3 > a').click());
+        await page.waitForSelector('table#va-infobox0');
+        console.log("Page 3 Loaded");
+        message.channel.send('Traitement...')
+
+     }catch(e){
+         message.channel.send('erreur lors du traitement des données')
+     }
+ 
+
+        
+
+        const data = await page.evaluate(() => Array.from(document.querySelectorAll('table#va-infobox0 tbody tr td.va-infobox-content, table#va-infobox0 tbody tr td.va-infobox-label'), e => e.innerText));
+        console.log("Récupération des données réussie");
+
+        const title = await page.evaluate(() => document.querySelector('#firstHeading').innerText)
+        embed.setTitle(title);
+        embed.setURL(page.url());
+        embed.setColor('#0099ff');
+
+        try {
+            await page.waitForSelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage')
+            var imageLink;
+            if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > div > table.va-infobox-mainimage-cont > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null){
+                imageLink = await page.evaluate(() => document.querySelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > div > table.va-infobox-mainimage-cont > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img').getAttribute('src'))
+            }
+            else if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > table > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null){
+                imageLink = await page.evaluate(() => document.querySelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > table > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img').getAttribute('src'))
+            }
+
+            else{
+                
+                message.channel.send('Photo introuvable')
+            }
+               
+        }
+
+        catch (e) {  
+            message.channel.send("Erreur lors de la récupération de l'image") 
+        }   
+        finally{
+            if(imageLink == null){
+                imageLink = 'https://i.stack.imgur.com/mwFzF.png'
+            }
+            await page.goto(imageLink)
+            await page.waitForSelector('body > img')
+            const img = await page.$('body > img')
+            await img.screenshot({path: 'image.png'})
+        } 
+            
+            
+            
+        const img = new Discord.MessageAttachment('image.png')
+        embed.attachFiles(img);
+        embed.setImage('attachment://image.png')
+
+        
         return data
     }
 
-    async function Display(arg) {
-        let elements = await GetData()
-        let count = 0
-        let Dataset = []
-
-
-        let Data = {
-            caliber: '',
-            name: '',
-            damage: '',
-            PP: '',
-            AD: '',
-            Accuracy: '',
-            Recoil: '',
-            FChance: '',
-            L: '',
-            H: '',
-            P1: '',
-            P2: '',
-            P3: '',
-            P4: '',
-            P5: '',
-            P6: '',
-        }
-
-        let match = []
-        match.push(0)
-        match.push(Data)
-
-
-        elements.forEach(element => {
-
-            let ammo = element;
-            let meta = JSON.stringify(ammo)
-            let array = String(meta).replace(/\\t/g, '$')
-            let metadata = array.split('$')
-            let name = metadata[0].toString().replace('\"', '')
-            name = name.split(' ').join('')
-
-
-            count = 0
-
-            for (let i in arg) {
-
-                metadata[0].toLowerCase().includes(arg[i].toLowerCase()) ? count++ : false;
-
-            }
-
-            if (count > match[0]) {
-
-                count = 0
-
-
-                Data = {
-                    caliber: metadata[0],
-                    name: name,
-                    damage: metadata[1],
-                    PP: metadata[2],
-                    AD: metadata[3],
-                    Accuracy: metadata[4],
-                    Recoil: metadata[5],
-                    FChance: metadata[6],
-                    L: metadata[7],
-                    H: metadata[8],
-                    P1: metadata[9],
-                    P2: metadata[10],
-                    P3: metadata[11],
-                    P4: metadata[12],
-                    P5: metadata[13],
-                    P6: metadata[14],
 
 
 
-                }
-                Dataset.push(Data)
-                match[1] = metadata
-
-            }
-        });
-
-
-
-        return Dataset
-
-    }
-
-    async function Sort(arg) {
-        let pp = []
-        arg = arg.replaceAll(" ", '').toLowerCase()
-
-        let Dataset = await Display(arg)
-        let SortedData = []
-
-        Dataset.forEach(value => {
-            if (value.name.toLowerCase().includes(arg)) {
-                SortedData.push(value)
-            }
-        });
-
-        if (SortedData.length <= 0) {
-            console.log("erreur munition inconnue")
-        }
-
-        if (SortedData.length != 1) {
-            message.channel.send("Plusieurs munitions peuvent correspondre a votre recherche :")
-            SortedData.forEach(ammunition => {
-                pp = []
-                pp.push(ammunition.P1, ammunition.P2, ammunition.P3, ammunition.P4, ammunition.P5, ammunition.P6)
-                const Embed = new MessageEmbed()
-                    .setColor('#0099ff')
-                    .setTitle('Tarkov wiki')
-                    .setURL('https://escapefromtarkov.fandom.com/wiki/Ballistics')
-                    .setDescription('The website for tarkov ballistics')
-                    .addFields
-                    (
-                        { name: 'name', value: ammunition.caliber.replace('\"', ''), inline: false },
-                        { name: 'Damage', value: ammunition.damage, inline: false },
-                        { name: 'penetration power', value: pp, inline: true },
-
-                    )
-
-                message.channel.send(Embed)
-            })
-        }
-        else {
-            console.log("Voici la munition qui correspond a votre recherche :")
-            console.log(SortedData[0])
-            pp.push(SortedData[0].P1, SortedData[0].P2, SortedData[0].P3, SortedData[0].P4, SortedData[0].P5, SortedData[0].P6)
-            const Embed = new MessageEmbed()
-                .setColor('#0099ff')
-                .setTitle('Tarkov wiki')
-                .setURL('https://escapefromtarkov.fandom.com/wiki/Ballistics')
-                .setDescription('The website for tarkov ballistics')
-                .addFields
-                (
-                    { name: 'name', value: SortedData[0].caliber.replace('\"', ''), inline: false },
-                    { name: 'Damage', value: SortedData[0].damage, inline: false },
-                    { name: 'penetration power', value: pp, inline: true },
-                )
-
-            message.channel.send(Embed)
-        }
-
-    }
 
 
 
