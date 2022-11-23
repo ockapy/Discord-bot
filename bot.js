@@ -1,158 +1,168 @@
-const Discord = require('discord.js')
-const puppeteer = require('puppeteer');
+const { Client, Intents, MessageEmbed, MessageAttachment } = require('discord.js');
 const request = require('request');
-const fs = require('fs')
-const client = new Discord.Client()
-const { MessageEmbed } = require('discord.js');
-const { func } = require('joi');
-client.on('ready', () => {
-    console.log("Connected as " + client.user.tag)
-})
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const Discord = require('discord.io');
+
+// Client causing problems when launching a asyncroneous task with puppeteer.
+// it seems that two async task can't work together with discord.
+// Solution not Found WIP
+
+
+
 
 // Get your bot's secret token from:
 // https://discordapp.com/developers/applications/
 // Click on your application -> Bot -> Token -> "Click to Reveal Token"
-bot_secret_token = "ODA3MzkzOTc2NDYxNjg4ODY1.YB3WPA.UQ00vGr350f6aHZSQdX6V56hGWE"
+bot_secret_token = "ODA3MzkzOTc2NDYxNjg4ODY1.YB3WPA.UQ00vGr350f6aHZSQdX6V56hGWE";
 
-client.login(bot_secret_token)
+client.login(bot_secret_token);
 
-
-
-client.on('message', message => {
-
-    let cmd = message.content.split(' ')[0].slice(1);
-    let args = message.content.replace('.' + cmd, '').trim();
-
-
-    switch (cmd) {
-
-        case 'info':
-            message.reply('je peux utiliser les commandes suivantes : \n .random pour choisir un jeu sans ce faire chier. \n .bedwars a utiliser pour les équipes');
-
-            break;
-
-        case 'random':
-
-            message.reply('Entre combiens de jeux hésitez vous ?');
-
-            message.channel.awaitMessages(m => m.author.id == message.author.id,
-
-                { max: 1, time: 30000 }).then(collected => {
-
-                    y = collected.first().content.toLowerCase();
-                    message.reply('ok');
-                    p = Math.floor(Math.random() * Math.floor(y));
-                    message.reply('quels sont les ' + y + ' jeu(x) entre lesquels vous hésitez ?').then(() => {
-
-                        message.channel.awaitMessages(m => m.author.id == message.author.id,
-                            { max: y, time: 30000 }).then(game => {
-
-
-
-                                var iterator = game.values();
-                                const array = []
-
-                                for (let elements of iterator) {
-
-                                    array.push(elements);
-
-                                }
-                                console.log(array);
-                                message.reply('le jeu séléctioné est : ');
-                                message.reply(array[p])
-
-
-                            });
-                    });
-
-
-                });
-            break;
-
-        case 'bedwars':
-
-            message.reply('Quels sont les 6 participants ?');
-
-            message.channel.awaitMessages(m => m.author.id == message.author.id,
-                { max: 6, time: 30000 }).then(choosenames => {
-                    var foo = choosenames.values();
-                    message.reply('les noms sont bien enregistrés');
-                    const table = [];
-                    const equipe1 = [];
-                    const equipe2 = [];
-                    const equipe3 = [];
-                    const verif = [];
-
-                    function shuffle(array) {
-                        table.sort(() => Math.random() - 0.5);
-                    }
-
-                    for (let elements of foo) {
-                        table.push(elements);
-                    }
-                    shuffle(table);
-                    for (let k = 0; k <= 5; k++) {
-
-
-
-                        if (!equipe1.includes(table[k]) && equipe1.length != 2) {
-                            equipe1.push(table[k]);
-
-
-                        } else if (!equipe2.includes(table[k]) && equipe2.length != 2) {
-                            equipe2.push(table[k]);
-
-
-                        } else {
-                            equipe3.push(table[k]);
-
-
-                        }
-
-
-
-
-
-                    }
-
-                    message.reply('equipe 1 :');
-                    message.reply(equipe1[0]);
-                    message.reply(equipe1[1]);
-
-                    message.reply('equipe 2 :');
-                    message.reply(equipe2[0]);
-                    message.reply(equipe2[1]);
-
-                    message.reply('equipe 3 :');
-                    message.reply(equipe3[0]);
-                    message.reply(equipe3[1]);
-                });
-            break;
-
-
-
-
-    };
+client.on('ready', async () => {
+    console.log("Connected as " + client.user.tag);
 });
+
+
+// var prefix = '!';
+
+// client.on("message",  async (message) => {
+//     console.log("start")
+//     if (message.author.bot || !message.content.startsWith(prefix)){
+//         return;
+//     }
+
+//     const args = message.content.slice(prefix.length).trim().split(' ');
+//     const cmd = args.shift().toLowerCase();
+
+
+//     switch (cmd) {
+
+//         case 'info':
+//             message.reply('je peux utiliser les commandes suivantes : \n .random pour choisir un jeu sans ce faire chier. \n .bedwars a utiliser pour les équipes');
+
+//             break;
+
+//         case 'random':
+
+//             message.reply('Entre combiens de jeux hésitez vous ?');
+
+//             message.channel.awaitMessages(m => m.author.id == message.author.id,
+
+//                 { max: 1, time: 30000 }).then(collected => {
+
+//                     y = collected.first().content.toLowerCase();
+//                     message.reply('ok');
+//                     p = Math.floor(Math.random() * Math.floor(y));
+//                     message.reply('quels sont les ' + y + ' jeu(x) entre lesquels vous hésitez ?').then(() => {
+
+//                         message.channel.awaitMessages(m => m.author.id == message.author.id,
+//                             { max: y, time: 30000 }).then(game => {
+
+
+
+//                                 var iterator = game.values();
+//                                 const array = []
+
+//                                 for (let elements of iterator) {
+
+//                                     array.push(elements);
+
+//                                 }
+//                                 console.log(array);
+//                                 message.reply('le jeu séléctioné est : ');
+//                                 message.reply(array[p])
+
+
+//                             });
+//                     });
+
+
+//                 });
+//             break;
+
+//         case 'bedwars':
+
+//             message.reply('Quels sont les 6 participants ?');
+
+//             message.channel.awaitMessages(m => m.author.id == message.author.id,
+//                 { max: 6, time: 30000 }).then(choosenames => {
+//                     var foo = choosenames.values();
+//                     message.reply('les noms sont bien enregistrés');
+//                     const table = [];
+//                     const equipe1 = [];
+//                     const equipe2 = [];
+//                     const equipe3 = [];
+//                     const verif = [];
+
+//                     function shuffle(array) {
+//                         table.sort(() => Math.random() - 0.5);
+//                     }
+
+//                     for (let elements of foo) {
+//                         table.push(elements);
+//                     }
+//                     shuffle(table);
+//                     for (let k = 0; k <= 5; k++) {
+
+
+
+//                         if (!equipe1.includes(table[k]) && equipe1.length != 2) {
+//                             equipe1.push(table[k]);
+
+
+//                         } else if (!equipe2.includes(table[k]) && equipe2.length != 2) {
+//                             equipe2.push(table[k]);
+
+
+//                         } else {
+//                             equipe3.push(table[k]);
+
+
+//                         }
+
+
+
+
+
+//                     }
+
+//                     message.reply('equipe 1 :');
+//                     message.reply(equipe1[0]);
+//                     message.reply(equipe1[1]);
+
+//                     message.reply('equipe 2 :');
+//                     message.reply(equipe2[0]);
+//                     message.reply(equipe2[1]);
+
+//                     message.reply('equipe 3 :');
+//                     message.reply(equipe3[0]);
+//                     message.reply(equipe3[1]);
+//                 });
+//             break;
+
+
+
+
+//     };
+// });
 
 
 //----------------------------------------------------------------COMMANDS FOR TARKOV-------------------------------//
 
 
 
-var prefix = '!'
-
-client.on('message', message => {
-    if (!message.content.startsWith(prefix) || message.author.bot) return;
-
+var prefix = '!';
+client.on("message", async (message) => {
+    if (message.author.bot || !message.content.charAt(0) == prefix) {
+        return;
+    }
     const args = message.content.slice(prefix.length).trim().split(' ');
     const command = args.shift().toLowerCase();
 
 
     switch (command) {
         case 'find':
-            let arg = args.join(' ')
-            console.log(arg)
+            let arg = args.join(' ');
+            console.log(arg);
             Sort(arg);
             break;
 
@@ -184,7 +194,7 @@ client.on('message', message => {
 
     async function Sort(arg) {
         const embed = new MessageEmbed()
-        
+
 
 
         let data = await GetData(arg, embed)
@@ -193,9 +203,9 @@ client.on('message', message => {
         let title = [];
         let values = [];
 
-       
 
-       
+
+
 
         data.forEach(element => {
 
@@ -213,15 +223,15 @@ client.on('message', message => {
         console.log(values)
 
         var line;
-        
+
         for (let i = 0; i < title.length; i++) {
-            if (i%3 == 0) {
+            if (i % 3 == 0) {
                 line = false
             }
-            else{
+            else {
                 line = true
             }
-            embed.addField(name = title[i], value = values[i], inline = line )
+            embed.addField(name = title[i], value = values[i], inline = line)
         }
 
 
@@ -233,46 +243,49 @@ client.on('message', message => {
 
 
     async function GetData(arg, embed) {
-
-        let input = String(arg);
-        const customargs = [
-            `--start-maximized`
-        ]
-        const browser = await puppeteer.launch({ headless: true, args: customargs, });
+        const puppeteer = require("puppeteer");
+   
+       const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], executablePath: 'C:/Program Files/Google/Chrome/Application/Chrome.exe' });
+        if (browser.isConnected) {
+            console.log("connected");
+        }
         const page = await browser.newPage();
-        try{
+        let input = String(arg);
+        try {
+            message.channel.send('Chargement...')
             await page.goto('https://escapefromtarkov.fandom.com/wiki/Special:Search?fulltext=1&query=&scope=internal&contentType=&ns%5B0%5D=0')
             await page.waitForSelector('input[name=query]');
             console.log("page 1 Loaded")
-            message.channel.send('Chargement...')
-        }catch(e){
+            
+        } catch (e) {
             message.channel.send('erreur lors du chargement des pages')
         }
-        
-        try{
+
+        try {
+            message.channel.send('Recherche...')
             await page.$eval('input[name=query]', (el, input) => el.value = input, input);
             await page.$eval('button[type="submit"]', e => e.click());
             await page.waitForSelector('article');
             console.log("Page 2 Loaded")
-            message.channel.send('Recherche...')
+            
         }
-        catch(e){
+        catch (e) {
             message.channel.send('erreur lors du traitement de la recherche')
         }
-        
-     try{
 
-        await page.evaluate(() => document.querySelector('article > h3 > a').click());
-        await page.waitForSelector('table#va-infobox0');
-        console.log("Page 3 Loaded");
-        message.channel.send('Traitement...')
+        try {
+            message.channel.send('Traitement...')
+            await page.evaluate(() => document.querySelector('article > h3 > a').click());
+            await page.waitForSelector('table#va-infobox0');
+            console.log("Page 3 Loaded");
+            
 
-     }catch(e){
-         message.channel.send('erreur lors du traitement des données')
-     }
- 
+        } catch (e) {
+            message.channel.send('erreur lors du traitement des données')
+        }
 
-        
+
+
 
         const data = await page.evaluate(() => Array.from(document.querySelectorAll('table#va-infobox0 tbody tr td.va-infobox-content, table#va-infobox0 tbody tr td.va-infobox-label'), e => e.innerText));
         console.log("Récupération des données réussie");
@@ -285,46 +298,43 @@ client.on('message', message => {
         try {
             await page.waitForSelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage')
             var imageLink;
-            if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > div > table.va-infobox-mainimage-cont > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null){
+            if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > div > table.va-infobox-mainimage-cont > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null) {
                 imageLink = await page.evaluate(() => document.querySelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > div > table.va-infobox-mainimage-cont > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img').getAttribute('src'))
             }
-            else if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > table > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null){
+            else if (await page.$('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > table > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img') !== null) {
                 imageLink = await page.evaluate(() => document.querySelector('#va-infobox0 > tbody > tr.va-infobox-row-mainimage > td > table > tbody > tr > td.va-infobox-mainimage-cont > table > tbody > tr > td > a > img').getAttribute('src'))
             }
 
-            else{
-                
+            else {
+
                 message.channel.send('Photo introuvable')
             }
-               
+
         }
 
-        catch (e) {  
-            message.channel.send("Erreur lors de la récupération de l'image") 
-        }   
-        finally{
-            if(imageLink == null){
+        catch (e) {
+            message.channel.send("Erreur lors de la récupération de l'image")
+        }
+        finally {
+            if (imageLink == null) {
                 imageLink = 'https://i.stack.imgur.com/mwFzF.png'
             }
             await page.goto(imageLink)
             await page.waitForSelector('body > img')
             const img = await page.$('body > img')
-            await img.screenshot({path: 'image.png'})
-        } 
-            
-            
-            
-        const img = new Discord.MessageAttachment('image.png')
+            await img.screenshot({ path: 'image.png' })
+            await browser.close();
+        }
+       
+       
+
+        const img = new MessageAttachment("image.png");
         embed.attachFiles(img);
         embed.setImage('attachment://image.png')
+    
 
-        
-        return data
+        return data;
     }
-
-
-
-
 
 
 
@@ -380,7 +390,5 @@ client.on('message', message => {
             files: [msg]
         });
     }
+
 })
-
-
-
